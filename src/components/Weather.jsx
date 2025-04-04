@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import search_icon from "../assets/search.png"
 import clear_icon from "../assets/clear.png"
 import cloud_icon from "../assets/cloud.png"
@@ -13,9 +13,13 @@ import Spinner from "./utils/Spinner"
 export default function Weather(){
 
     const [cityWeatherData, setCityWeatherData] = useState(null)
-    const [inputValue, setInputValue] = useState('')
+    const [inputValue, setInputValue] = useState('London')
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
+
+    useEffect(()=>{
+        handleSearch()
+    }, [])
 
     function handleChange(event){
         setInputValue(event.target.value)
@@ -43,12 +47,15 @@ export default function Weather(){
     async function handleSearch(){
         try{
             setIsLoading(true)
+            setError(null)
             const data = await weatherService.getCurrentWeatherForCity(inputValue)
+            const icon = allIcons[data.current.condition.code] || clear_icon
             setCityWeatherData({
                 temp: Math.floor(data.current.temp_c),
                 name: data.location.name,
                 humidity: data.current.humidity,
                 wind: data.current.wind_kph,
+                icon: icon
             })
         }
         catch(err){
@@ -60,18 +67,11 @@ export default function Weather(){
     }
 
     return(
-        <div className="flex flex-col items-center justify-center bg-white rounded-md px-8 py-10 bg-linear-to-br from-blue-800 to-purple-800">
+        <div className="flex flex-col items-center bg-white rounded-md px-8 py-10 bg-linear-to-br from-blue-800 to-purple-800">
             {isLoading ?
-                <div className="flex justify-center items-center h-[500px] w-[300px]">
+                <div className="flex justify-center items-center h-[450px] w-[300px]">
                     <Spinner />
-                </div> :
-            error ?
-                <div className="flex justify-center items-center h-[500px] w-[300px]">
-                    <div className="flex flex-col items-center gap-5">
-                        <p className="text-2xl font-bold">An error occured</p>
-                        <button onClick={()=>{window.location.reload()}} className="border-3 w-full rounded-full">Try again</button>
-                    </div>
-               </div>
+                </div> 
                 : 
                     <>
                         <div className="flex justify-between items-center gap-3 mb-3 text-[#525252]">
@@ -80,25 +80,36 @@ export default function Weather(){
                                 <img src={search_icon} alt="Search" />
                             </div>
                         </div>
-                        <img src={clear_icon} alt="Weather icon" className="mb-3"/>
-                        <p className="text-7xl font-semibold mb-1">{cityWeatherData?.temp}°C</p>
-                        <p className="text-4xl tracking-wider mb-12">{cityWeatherData?.name}</p>
-                        <div className="flex justify-between items-center w-full max-w-[270px]">
-                            <div className="flex gap-2 items-center">
-                                <img className="max-w-[20px]" src={humidity_icon} alt="Humidity" />
-                                <div className="flex flex-col">
-                                    <p className="text-xl">{cityWeatherData?.humidity}%</p>
-                                    <p>Humidity</p>
+                        {
+                            error ?
+                            <>
+                                <div className="flex justify-center items-center h-[450px] w-[300px]">
+                                    <p className="font-bold text-2xl">No Results</p>
                                 </div>
-                            </div>
-                            <div className="flex gap-2 items-center">
-                                <img className="max-w-[20px]" src={wind_icon} alt="Wind speed" />
-                                <div className="flex flex-col">
-                                    <p className="text-xl">{cityWeatherData?.wind} Km/h</p>
-                                    <p>Wind Speed</p>
+                            </> :
+                            <>
+                                <img src={cityWeatherData?.icon} alt="Weather icon" className="mb-3"/>
+                                <p className="text-7xl font-semibold mb-1">{cityWeatherData?.temp}°C</p>
+                                <p className="text-4xl tracking-wider mb-12">{cityWeatherData?.name}</p>
+                                <div className="flex justify-between items-center w-full max-w-[270px]">
+                                    <div className="flex gap-2 items-center">
+                                        <img className="max-w-[20px]" src={humidity_icon} alt="Humidity" />
+                                        <div className="flex flex-col">
+                                            <p className="text-xl">{cityWeatherData?.humidity}%</p>
+                                            <p>Humidity</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-2 items-center">
+                                        <img className="max-w-[20px]" src={wind_icon} alt="Wind speed" />
+                                        <div className="flex flex-col">
+                                            <p className="text-xl">{cityWeatherData?.wind} Km/h</p>
+                                            <p>Wind Speed</p>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            </>
+                        }
+                       
                     </>
             }
         </div>
